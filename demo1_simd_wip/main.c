@@ -28,14 +28,16 @@ uint64_t index_from_key(uint64_t key, uint8_t shift_amount)
 
 
 
-
+// gcc -dM -E - < /dev/null | egrep "SSE|AVX" | sort
 void keys_to_indices(uint64_t const keys[4], uint64_t indices[4], uint8_t shift)
 {
   __m256i m256_magic = _mm256_set1_epi64x(11400714819323198485ull);
-  __m256i m256_keys = _mm256_load_epi64((void*)keys);
+  __m256i m256_keys = _mm256_maskz_loadu_epi64(~0, (void*)keys);
+  //__m256i m256_keys = _mm256_load_epi64((void*)keys);
   __m256i m256_result = _mm256_srli_epi64(_mm256_mul_epu32(m256_magic, m256_keys), shift);
-  _mm256_storeu_epi64(indices, m256_result);
+  //_mm256_storeu_epi64(indices, m256_result);
 }
+
 
 
 typedef struct
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
   {
     uint64_t keys[4] = {0};
     uint64_t index[4] = {i, i+100, i+200, i+300};
-    test(keys, keys, shift_amount);
+    keys_to_indices(keys, keys, shift_amount);
     printf("%ju %ju %ju %ju\n", keys[0], keys[1], keys[2], keys[3]);
   }
  
